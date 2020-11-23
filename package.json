@@ -1,0 +1,20 @@
+{
+  "name": "letsisrg",
+  "version": "0.0.1-2",
+  "description": "Remind users to install ISRG Root X1",
+  "main": "src/index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Alan-Liang/letsisrg.git"
+  },
+  "keywords": [
+    "lets-encrypt",
+    "isrg-root-x1"
+  ],
+  "author": "Alan-Liang",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Alan-Liang/letsisrg/issues"
+  },
+  "homepage": "https://github.com/Alan-Liang/letsisrg#readme"
+}
