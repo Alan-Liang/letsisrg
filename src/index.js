@@ -1,39 +1,50 @@
 setTimeout(function () {
-  // don't show after 2021-9-30
-  if (new Date().getTime() > 1633010475000) return
   if (window.$letsisrg) {
     var cfg = $letsisrg
     var ignoreVersion = !!cfg.ignoreVersion
     var ignoreTested = !!cfg.ignoreTested
-    var checkBots = !('ignoreBots' in cfg) || !cfg.ignoreBots
+    var ignoreTime = !!cfg.ignoreTime
+    var testOnIos = !!cfg.testOnIos
+    var testOnBots = !!cfg.testOnBots
     var force = !!cfg.forceTest
     var link = cfg.messageLink
     var html = cfg.messageHtml
     var serviceName = cfg.serviceName
     var defaultLang = cfg.defaultLanguage
-    if (cfg.render) render = cfg.render
+    if ('render' in cfg) {
+      if (typeof cfg.render === 'function') render = cfg.render
+      if (!cfg.render) render = function () {}
+    }
     var testUrl = cfg.testUrl
     var testConnectivityUrl = cfg.testConnectivityUrl
-    var callback = cfg.onfail
+    var callback = cfg.callback
   }
   var testMode = location.href.indexOf('#test-letsisrg') > -1
-  if (testMode) return void setTimeout(render, 1)
+  if (testMode) {
+    call({ skipped: true, reason: 'In test mode' })
+    setTimeout(render, 1)
+    return
+  }
   function ignore (reason, re) { if (re.test(navigator.userAgent)) return reason + ' detected' }
   if (!force) {
     var skip
     if (getProperty('Closed')) skip = 'User has closed message'
     // https://github.com/browser-update/browser-update/blob/master/scripts/update.js
-    if (checkBots) skip = skip || ignore('Bot', /Pagespeed|pingdom|Preview|ktxn|dynatrace|Ruxit|PhantomJS|Headless|Lighthouse|bot|spider|archiver|transcoder|crawl|checker|monitoring|prerender|screenshot|python-|php|uptime|validator|fetcher|facebook|slurp|google|yahoo|node|mail.ru|github|cloudflare|addthis|thumb|proxy|feed|fetch|favicon|link|http|scrape|seo|page|search console|AOLBuild|Teoma|Expeditor/i)
+    if (!testOnBots) skip = skip || ignore('Bot', /Pagespeed|pingdom|Preview|ktxn|dynatrace|Ruxit|PhantomJS|Headless|Lighthouse|bot|spider|archiver|transcoder|crawl|checker|monitoring|prerender|screenshot|python-|php|uptime|validator|fetcher|facebook|slurp|google|yahoo|node|mail.ru|github|cloudflare|addthis|thumb|proxy|feed|fetch|favicon|link|http|scrape|seo|page|search console|AOLBuild|Teoma|Expeditor/i)
     if (!ignoreVersion) {
       var ver = 'Sufficient version of '
       skip = skip
         || ignore(ver + 'Firefox', /Firefox\/([5-9]\d|\d{3,})/i)
         || ignore(ver + 'Android', /Android (\d\d|9|8|7\.1\.[0-9])/i)
-        || ignore(ver + 'iOS', /iP(hone|[ao]d(; CPU)?) OS \d\d/i)
         || ignore(ver + 'macOS', /OS X (\d{3,}|[2-9]\d|1[1-9]|10_1[3-9]|10_12_)/i)
     }
+    // iOS could find the DST signature path by itself
+    if (!testOnIos) skip = skip || ignore('iOS', /iP(hone|[ao]d)/i)
+    // don't show after 2021-9-30
+    if (!ignoreTime && new Date().getTime() > 1633010475000) skip = skip || 'DST Root CA X3 has already expired, skipping ISRG Root X1 test.'
     if (!ignoreTested && getProperty('Ok')) skip = skip || 'The browser has already been tested OK'
     if (skip) {
+      call({ skipped: true, reason: skip })
       console.log(skip + ', skipping ISRG Root X1 test.')
       return
     }
@@ -42,20 +53,27 @@ setTimeout(function () {
   var start = new Date().getTime()
   request(testUrl || 'https://valid.isrgrootx1.top/', function () {
     // ignore timeouts
-    if (new Date().getTime() - start > 10 * 1000) return
+    if (new Date().getTime() - start > 10 * 1000) {
+      call({ error: 'Connection timed out.' })
+      return
+    }
     // test connectivity
     request(testConnectivityUrl || 'https://isrgrootx1.netlify.app/', function () {
       // no connectivity, ignore
       console.log('No internet connectivity is detected.')
+      call({ error: 'Network error.' })
     }, function () {
       // has connectivity but does not support ISRG Root X1
-      if (typeof callback === 'function') try { callback() } catch (_) {}
+      call({ supported: false })
       render()
     })
   }, function () {
     // test ok!
+    call({ supported: true })
     setProperty('Ok', 168)
   })
+
+  function call (p) { if (typeof callback === 'function') try { callback(p) } catch (_) {} }
 
   function request (url, onerror, onload) {
     var completed = false
@@ -93,7 +111,7 @@ setTimeout(function () {
       'en': '[Close]',
       'zh': '[关闭]',
     }) + '</a>'
-    var styles = '<style>.letsisrg { position: fixed; bottom: 0; top: auto; left: 0; right: 0; border-top: 1px solid #e0e0e0; border-top-left-radius: 4px; border-top-right-radius: 4px; padding: 8px; font-family: sans-serif; background-color: #ffc; } .letsisrg--hidden { display: none; } .letsisrg__close { float: right; }</style>'
+    var styles = '<style>.letsisrg{position:fixed;bottom:0;top:auto;left:0;right:0;border-top:1px solid #e0e0e0;border-top-left-radius:4px;border-top-right-radius:4px;padding:8px;font-family:sans-serif;background-color:#ffc;}.letsisrg--hidden{display:none;}.letsisrg__close{float:right;}</style>'
     var container = document.createElement('div')
     container.className = 'letsisrg'
     container.innerHTML = styles + msg + close
@@ -111,11 +129,11 @@ setTimeout(function () {
   }
 
   function getProperty (name) {
-    var exp = 'localStorage' in window && localStorage && localStorage['isrgRoot' + name]
+    var exp = window.localStorage && localStorage['isrgRoot' + name]
     if (isNaN(exp)) return false
     return Number(exp) > new Date().getTime()
   }
   function setProperty (name, hours) {
-    if ('localStorage' in window && localStorage) localStorage['isrgRoot' + name] = '' + (new Date().getTime() + 3600000 * hours)
+    if (window.localStorage) localStorage['isrgRoot' + name] = '' + (new Date().getTime() + 3600000 * hours)
   }
 }, 50)

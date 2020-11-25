@@ -2,11 +2,12 @@
   "name": "letsisrg",
   "version": "0.0.1-2",
   "description": "Remind users to install ISRG Root X1",
-  "main": "src/index.js",
+  "main": "dist/letsisrg.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Alan-Liang/letsisrg.git"
   },
+  "files": [ "dist" ],
   "keywords": [
     "lets-encrypt",
     "isrg-root-x1"
