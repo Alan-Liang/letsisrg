@@ -35,6 +35,7 @@ options (all optional):
 - `serviceName`: The reminder will include this `string` if this option is set, do not set if your site is not using a Let's Encrypt certificate.
 - `defaultLanguage`: The fallback language code, defaults to `en`.
 - `render`: pass a custom reminder render function here if you need.
+- `noStyles`: when passed `true`, the script will not insert the stylesheet to the document; you should include your own stylesheet or else the reminder would appear at the very bottom at your site with no styles.
 - `testUrl`: the URL to perform the main test, should be using a ISRG Root X1-signed certificate.
 - `testConnectivityUrl`: the URL to perform the network connectivity check.
 - `callback`: a function to be performed after the test. payload would be one of:
@@ -50,6 +51,10 @@ options (all optional):
 - `forceTest`: ignore all pre-checks, forces to perform the test.
 
 Additionally, the reminder is always shown if the URL on script load contains `#test-letsisrg`.
+
+## Content Security Policy (CSP)
+
+If you use a CSP, this script will need an `unsafe-inline` directive for `style-src`. You can use your own styles and specify `noStyles` if you do not want to include the directive.
 
 ## Caveats
 

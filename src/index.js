@@ -11,6 +11,7 @@ setTimeout(function () {
     var html = cfg.messageHtml
     var serviceName = cfg.serviceName
     var defaultLang = cfg.defaultLanguage
+    var noStyles = !!cfg.noStyles
     if ('render' in cfg) {
       if (typeof cfg.render === 'function') render = cfg.render
       if (!cfg.render) render = function () {}
@@ -111,7 +112,9 @@ setTimeout(function () {
       'en': '[Close]',
       'zh': '[关闭]',
     }) + '</a>'
-    var styles = '<style>.letsisrg{position:fixed;bottom:0;top:auto;left:0;right:0;border-top:1px solid #e0e0e0;border-top-left-radius:4px;border-top-right-radius:4px;padding:8px;font-family:sans-serif;background-color:#ffc;}.letsisrg--hidden{display:none;}.letsisrg__close{float:right;}</style>'
+    var styles = noStyles
+      ? ''
+      : '<style>.letsisrg{position:fixed;bottom:0;top:auto;left:0;right:0;border-top:1px solid #e0e0e0;border-top-left-radius:4px;border-top-right-radius:4px;padding:8px;font-family:sans-serif;background-color:#ffc;z-index:99;}.letsisrg--hidden{display:none;}.letsisrg__close{float:right;}</style>'
     var container = document.createElement('div')
     container.className = 'letsisrg'
     container.innerHTML = styles + msg + close
